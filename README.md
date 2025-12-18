@@ -1,20 +1,93 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <h1>🎓 四级真题大师 (Vocab Master)</h1>
+  <p>
+    <b>一个为中国大学生量身打造的 CET-4 备考利器</b>
+  </p>
+  <p>
+    <i>"拒绝死记硬背，在真题语境中掌握核心词汇。"</i>
+  </p>
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## 👋 关于本项目
 
-View your app in AI Studio: https://ai.studio/apps/drive/1XJMClKR7AAul_A2oA_C12h2fVCAIDN_m
+你好！我是这个项目的独立开发者。
 
-## Run Locally
+作为一名曾经也在四级题海中挣扎的学生，我深知背单词的痛苦：**背了忘，忘了背，到了考场还是看不懂**。市面上的单词软件很多，但往往缺乏针对性，或者功能过于臃肿。
 
-**Prerequisites:**  Node.js
+于是，我利用业余时间开发了这款 **「四级真题大师」**。
 
+我的初衷很简单：**回归语言学习的本质——语境**。这款应用不只是让你记住单词的中文意思，更是通过历年真题中的例句，让你理解单词在实际考试中是如何被使用的。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## ✨ 核心亮点
+
+*   **🧠 科学记忆算法**：内置 **SM-2 记忆曲线算法**，智能安排复习时间，告别无效重复。
+*   **📖 真题语境驱动**：每一个核心词汇都配有 **CET-4 真题例句**，拒绝生造句，直击考点。
+*   **⚔️ 实战模拟测试**：
+    *   **语境填空**：还原真题挖空模式，训练你的上下文理解能力。
+    *   **释义挑战**：快速反应测试，巩固基础记忆。
+*   **📷 OCR 拍照识词**：遇到生词拍一拍，自动提取并加入生词本（基于 Tesseract.js）。
+*   **📊 可视化数据**：精美的热力图和学习数据统计，让你看见每一天的进步。
+*   **🤖 AI 深度解析**：(可选) 集成 DeepSeek AI，为难词提供词源分析、助记故事和同根词拓展。
+*   **📱 跨平台体验**：基于 Capacitor 构建，支持 Android 原生体验，同时也完美适配移动端网页。
+
+## 🛠️ 技术栈
+
+作为一个技术爱好者，这个项目也是我实践现代前端技术的试验田：
+
+*   **核心框架**: React 19 + TypeScript
+*   **构建工具**: Vite
+*   **UI 样式**: Tailwind CSS (完全自定义的精美 UI，支持深色模式)
+*   **数据存储**: IndexedDB (本地存储，保护隐私，离线可用)
+*   **移动端适配**: Capacitor (Android)
+*   **AI 服务**: DeepSeek API
+*   **OCR 引擎**: Tesseract.js
+
+## 🚀 快速开始
+
+如果你也想在本地运行这个项目，或者基于它进行二次开发：
+
+1.  **克隆项目**
+    ```bash
+    git clone https://github.com/yourusername/CET-4-main.git
+    cd CET-4-main
+    ```
+
+2.  **安装依赖**
+    ```bash
+    npm install
+    ```
+
+3.  **配置环境变量**
+    复制 `.env.example` 为 `.env.local`，并填入你的 API Key（如果需要使用 AI 功能）：
+    ```bash
+    cp .env.example .env.local
+    # 编辑 .env.local 文件，填入 DEEPSEEK_API_KEY
+    ```
+
+4.  **启动开发服务器**
+    ```bash
+    npm run dev
+    ```
+
+5.  **构建 Android 应用 (可选)**
+    ```bash
+    npm run build
+    npx cap sync
+    npx cap open android
+    ```
+
+## 🤝 贡献与反馈
+
+这是一个个人维护的开源项目，肯定还有很多不足之处。
+
+*   如果你发现了 Bug，欢迎提交 Issue。
+*   如果你有好的想法，欢迎 Fork 并提交 PR。
+*   如果你觉得这个项目对你有帮助，请给一个 ⭐️ Star，这对我是莫大的鼓励！
+
+---
+
+<div align="center">
+  <p>Made with ❤️ and ☕ by an Indie Developer</p>
+</div>
