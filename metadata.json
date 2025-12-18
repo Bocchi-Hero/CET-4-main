@@ -1,0 +1,7 @@
+{
+  "name": "CET-4 真题大师",
+  "description": "A modern, AI-powered vocabulary trainer for the CET-4 English exam featuring flashcards, spaced repetition, and TXT import with deduplication.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
