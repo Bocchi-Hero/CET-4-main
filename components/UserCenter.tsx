@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { User, AppState } from '../types';
+import { db } from '../services/dbService';
 
 interface UserCenterProps {
   user: User;
@@ -20,6 +21,18 @@ const UserCenter: React.FC<UserCenterProps> = ({
   toggleDarkMode 
 }) => {
   const registerDate = new Date(user.createdAt).toLocaleDateString();
+
+  const handleClearImported = async () => {
+    if (window.confirm("确定要清除所有手动导入的词汇吗？这将删除所有带有 'imported' 标签的单词。")) {
+      try {
+        const count = await db.clearImportedVocabulary();
+        alert(`已清除 ${count} 个导入的单词。`);
+        window.location.reload();
+      } catch (e) {
+        alert("清除失败: " + e);
+      }
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 pt-12 pb-40 animate-slide-up space-y-8">
@@ -53,6 +66,19 @@ const UserCenter: React.FC<UserCenterProps> = ({
                 <div className="text-left">
                   <h4 className="font-bold text-slate-800 dark:text-slate-200">外部词库导入</h4>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">TXT Batch Import</p>
+                </div>
+              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-slate-200 dark:text-slate-700"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+
+            <button onClick={handleClearImported} className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all px-8 group">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </div>
+                <div className="text-left">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200">清除导入词汇</h4>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Clear Imported Data</p>
                 </div>
               </div>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-slate-200 dark:text-slate-700"><path d="m9 18 6-6-6-6"/></svg>

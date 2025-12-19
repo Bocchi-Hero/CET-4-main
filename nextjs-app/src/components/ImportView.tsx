@@ -43,6 +43,15 @@ const ImportView: React.FC<ImportViewProps> = ({ onSuccess, onBack }) => {
     return words;
   };
 
+  const readFileContent = (file: File, encoding: string = 'UTF-8'): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = (e) => reject(new Error("文件读取失败"));
+      reader.readAsText(file, encoding);
+    });
+  };
+
   const handleFileUpload = async (file: File) => {
     setError(null);
     setIsProcessing(true);
@@ -53,29 +62,38 @@ const ImportView: React.FC<ImportViewProps> = ({ onSuccess, onBack }) => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const text = e.target?.result as string;
-        const newWords = parseTxt(text);
-        
-        const existingWords = await db.getFullVocabulary();
-        const existingSet = new Set(existingWords.map(w => w.word.toLowerCase().trim()));
-        const uniqueNewWords = newWords.filter(w => !existingSet.has(w.word.toLowerCase().trim()));
-        
-        if (uniqueNewWords.length === 0) {
-          throw new Error("这些单词已在您的词库中，无需重复导入。");
+    try {
+      // 尝试使用 UTF-8 读取
+      let text = await readFileContent(file, 'UTF-8');
+      
+      // 检测乱码：如果包含替换字符 ()，尝试使用 GBK
+      if (text.includes('\uFFFD')) {
+        console.log("检测到 UTF-8 乱码，尝试使用 GBK 读取...");
+        try {
+          const gbkText = await readFileContent(file, 'GBK');
+          text = gbkText;
+        } catch (e) {
+          console.warn("GBK 读取失败，回退到 UTF-8");
         }
-
-        await db.seedVocabulary([...existingWords, ...uniqueNewWords]);
-        onSuccess(uniqueNewWords.length);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsProcessing(false);
       }
-    };
-    reader.readAsText(file);
+
+      const newWords = parseTxt(text);
+      
+      const existingWords = await db.getFullVocabulary();
+      const existingSet = new Set(existingWords.map(w => w.word.toLowerCase().trim()));
+      const uniqueNewWords = newWords.filter(w => !existingSet.has(w.word.toLowerCase().trim()));
+      
+      if (uniqueNewWords.length === 0) {
+        throw new Error("这些单词已在您的词库中，无需重复导入。");
+      }
+
+      await db.seedVocabulary([...existingWords, ...uniqueNewWords]);
+      onSuccess(uniqueNewWords.length);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleExport = async () => {

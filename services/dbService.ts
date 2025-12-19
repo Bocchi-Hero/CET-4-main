@@ -116,6 +116,23 @@ export class DBService {
     });
   }
 
+  async clearImportedVocabulary(): Promise<number> {
+    const allWords = await this.getFullVocabulary();
+    const importedWords = allWords.filter(w => w.tags && (w.tags.includes('imported') || w.tags.includes('custom-lib')));
+    
+    if (importedWords.length === 0) return 0;
+
+    if (!this._db) await this.init();
+    return new Promise((resolve, reject) => {
+        if (!this._db) return reject("DB not initialized");
+        const transaction = this._db.transaction('vocabulary', 'readwrite');
+        const store = transaction.objectStore('vocabulary');
+        importedWords.forEach(w => store.delete(w.id));
+        transaction.oncomplete = () => resolve(importedWords.length);
+        transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   async clearAllData(): Promise<void> {
     if (!this._db) await this.init();
     const stores = ['vocabulary', 'progress', 'mistakes', 'activity', 'users'];
