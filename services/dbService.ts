@@ -1,8 +1,8 @@
 
-import { VocabularyWord, WordProgress, User } from '../types';
+import { VocabularyWord, WordProgress, User, AIResponse } from '../types';
 
 const DB_NAME = 'VocabMasterDB_v6'; 
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 export class DBService {
   private _db: IDBDatabase | null;
@@ -40,6 +40,9 @@ export class DBService {
         }
         if (!db.objectStoreNames.contains('mistakes')) {
           db.createObjectStore('mistakes', { keyPath: 'id' }); // key: "username_wordId"
+        }
+        if (!db.objectStoreNames.contains('ai_cache')) {
+          db.createObjectStore('ai_cache', { keyPath: 'word' });
         }
       };
 
@@ -196,6 +199,15 @@ export class DBService {
         createdAt: u.createdAt
       }))
       .sort((a, b) => b.points - a.points);
+  }
+
+  // AI Cache Methods
+  async getAICache(word: string): Promise<AIResponse | null> {
+    return this.perform('ai_cache', 'readonly', (store) => store.get(word.toLowerCase().trim()));
+  }
+
+  async setAICache(word: string, data: AIResponse): Promise<void> {
+    return this.perform('ai_cache', 'readwrite', (store) => store.put({ ...data, word: word.toLowerCase().trim() }));
   }
 
   private async perform(storeName: string, mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest): Promise<any> {

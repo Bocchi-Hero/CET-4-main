@@ -4,6 +4,7 @@
  */
 
 import { VocabularyWord, AIResponse } from '@/types';
+import { db } from './dbService';
 
 const API_BASE = '/api/ai';
 
@@ -11,6 +12,17 @@ const API_BASE = '/api/ai';
  * 生成单词的 AI 辅助记忆内容
  */
 export const generateWordHelp = async (word: VocabularyWord): Promise<AIResponse | null> => {
+  // Check cache first
+  try {
+    const cached = await db.getAICache(word.word);
+    if (cached) {
+      console.log('Using cached AI response for:', word.word);
+      return cached;
+    }
+  } catch (e) {
+    console.warn('Failed to check AI cache:', e);
+  }
+
   try {
     const response = await fetch(`${API_BASE}/word-help`, {
       method: 'POST',
@@ -25,7 +37,16 @@ export const generateWordHelp = async (word: VocabularyWord): Promise<AIResponse
       return null;
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Cache the result
+    try {
+      await db.setAICache(word.word, data);
+    } catch (e) {
+      console.warn('Failed to cache AI response:', e);
+    }
+
+    return data;
   } catch (error) {
     console.error('Word help fetch error:', error);
     return null;

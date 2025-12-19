@@ -2,6 +2,7 @@
 
 import { VocabularyWord, TestQuestion } from '@/types';
 import React, { useState, useMemo, useEffect } from 'react';
+import { db } from '@/services/dbService';
 
 interface TestModeProps {
   words: VocabularyWord[]; 
@@ -17,6 +18,65 @@ const TestMode: React.FC<TestModeProps> = ({ words, allDatasetWords, mode, onFin
   const [isLocked, setIsLocked] = useState(false);
   const [score, setScore] = useState(0);
   const [wrongWords, setWrongWords] = useState<VocabularyWord[]>([]);
+  const [enhancedQuestions, setEnhancedQuestions] = useState<TestQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const prepareQuestions = async () => {
+      setIsLoading(true);
+      const questions: TestQuestion[] = [];
+
+      for (const word of words) {
+        const isMeaning = mode === 'MEANING';
+        const correctAnswer = (isMeaning ? word.translation : word.word) || "";
+        
+        let displayPrompt = "";
+        
+        if (isMeaning) {
+          displayPrompt = word.word;
+        } else {
+          // 默认使用例句
+          let rawText = word.example || "No example provided.";
+          
+          // 尝试从 AI 缓存获取更丰富的语境
+          try {
+            const cached = await db.getAICache(word.word);
+            if (cached && cached.contextStory) {
+              rawText = cached.contextStory;
+            }
+          } catch (e) {
+            console.warn("Failed to load AI cache for test", e);
+          }
+
+          // 智能挖空逻辑
+          const safeWord = word.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(\\*\\*)?${safeWord}\\w*(\\*\\*)?`, 'gi');
+          displayPrompt = rawText.replace(regex, ' ________ ');
+        }
+
+        const distractors = allDatasetWords
+          .filter(w => w.word.toLowerCase() !== word.word.toLowerCase())
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3)
+          .map(w => isMeaning ? w.translation : w.word);
+        
+        const options = [...distractors, correctAnswer].sort(() => 0.5 - Math.random());
+        
+        questions.push({ 
+          word, 
+          options, 
+          correctAnswer, 
+          type: mode, 
+          displayPrompt 
+        });
+      }
+      
+      setEnhancedQuestions(questions);
+      setIsLoading(false);
+    };
+
+    prepareQuestions();
+  }, [words, mode, allDatasetWords]);
 
   useEffect(() => {
     setIsLocked(true);
@@ -25,29 +85,8 @@ const TestMode: React.FC<TestModeProps> = ({ words, allDatasetWords, mode, onFin
   }, [currentIndex]);
 
   const currentQuestion = useMemo(() => {
-    const word = words[currentIndex];
-    if (!word) return null;
-
-    const isMeaning = mode === 'MEANING';
-    const correctAnswer = (isMeaning ? word.translation : word.word) || "";
-    
-    const safeWord = word.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(safeWord, 'gi');
-    
-    const exampleText = word.example || "No example provided.";
-    const displayPrompt = isMeaning 
-      ? word.word 
-      : exampleText.replace(regex, ' ________ ');
-    
-    const distractors = allDatasetWords
-      .filter(w => w.word.toLowerCase() !== word.word.toLowerCase())
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 3)
-      .map(w => isMeaning ? w.translation : w.word);
-    
-    const options = [...distractors, correctAnswer].sort(() => 0.5 - Math.random());
-    return { word, options, correctAnswer, type: mode, displayPrompt } as TestQuestion;
-  }, [currentIndex, words, mode, allDatasetWords]);
+    return enhancedQuestions[currentIndex] || null;
+  }, [currentIndex, enhancedQuestions]);
 
   const handleSelect = (option: string) => {
     if (isAnswered || isLocked || !currentQuestion) return;
@@ -68,6 +107,15 @@ const TestMode: React.FC<TestModeProps> = ({ words, allDatasetWords, mode, onFin
       }
     }, 1200);
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-2xl mx-auto animate-slide-up flex flex-col items-center justify-center h-64">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-400 font-bold">正在生成测试题目...</p>
+      </div>
+    );
+  }
 
   if (!currentQuestion) return null;
 

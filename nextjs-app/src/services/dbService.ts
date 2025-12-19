@@ -3,10 +3,10 @@
  * 用于本地存储用户数据、学习进度等
  */
 
-import { VocabularyWord, WordProgress, User } from '@/types';
+import { VocabularyWord, WordProgress, User, AIResponse } from '@/types';
 
 const DB_NAME = 'VocabMasterDB_v5'; 
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 export class DBService {
   private _db: IDBDatabase | null;
@@ -35,6 +35,9 @@ export class DBService {
         }
         if (!db.objectStoreNames.contains('mistakes')) {
           db.createObjectStore('mistakes', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('ai_cache')) {
+          db.createObjectStore('ai_cache', { keyPath: 'word' });
         }
       };
 
@@ -144,6 +147,15 @@ export class DBService {
     const nextId = current.length > 0 ? Math.max(...current.map(w => w.id)) + 1 : 1;
     const finalWord = { ...word, id: nextId, isStarred: false };
     return this.perform('vocabulary', 'readwrite', (store) => store.add(finalWord));
+  }
+
+  // AI Cache Methods
+  async getAICache(word: string): Promise<AIResponse | null> {
+    return this.perform('ai_cache', 'readonly', (store) => store.get(word.toLowerCase().trim()));
+  }
+
+  async setAICache(word: string, data: AIResponse): Promise<void> {
+    return this.perform('ai_cache', 'readwrite', (store) => store.put({ ...data, word: word.toLowerCase().trim() }));
   }
 
   async findWord(wordStr: string): Promise<VocabularyWord | null> {

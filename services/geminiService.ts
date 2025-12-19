@@ -1,5 +1,6 @@
 
 import { VocabularyWord, AIResponse } from '../types';
+import { db } from './dbService';
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
@@ -40,6 +41,17 @@ const callDeepSeek = async (messages: { role: string; content: string }[], jsonM
 };
 
 export const generateWordHelp = async (word: VocabularyWord): Promise<AIResponse | null> => {
+  // Check cache first
+  try {
+    const cached = await db.getAICache(word.word);
+    if (cached) {
+      console.log('Using cached AI response for:', word.word);
+      return cached;
+    }
+  } catch (e) {
+    console.warn('Failed to check AI cache:', e);
+  }
+
   const prompt = `
 作为语言学专家，分析英语单词 "${word.word}"。
 
@@ -69,7 +81,16 @@ export const generateWordHelp = async (word: VocabularyWord): Promise<AIResponse
     ]);
 
     if (!result) return null;
-    return JSON.parse(result) as AIResponse;
+    const parsed = JSON.parse(result) as AIResponse;
+    
+    // Cache the result
+    try {
+      await db.setAICache(word.word, parsed);
+    } catch (e) {
+      console.warn('Failed to cache AI response:', e);
+    }
+
+    return parsed;
   } catch (error) {
     console.error('DeepSeek Error:', error);
     return null;
